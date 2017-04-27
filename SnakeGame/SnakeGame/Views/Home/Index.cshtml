@@ -1,0 +1,284 @@
+﻿@{ ViewBag.Title = "Index"; }
+<style>
+
+    #snakeGrid{
+        position: absolute;
+        top: 0;
+        left: 0;
+            
+        height: 600px;
+        width: 900px;
+        background-color: gray;
+        z-index: 100;
+
+    }
+    
+    .snake {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 15px;
+        width: 15px;
+        z-index: 300;
+        border-radius: 50%;
+        background-color:  #FF0080;
+    }
+    .food {
+        position: absolute;
+        height: 15px;
+        width: 15px;
+        z-index: 200;
+        border-radius: 50%;
+        background-color: peachpuff;
+    }
+
+</style>
+
+
+
+
+
+<div id="snakeGrid">
+    
+</div>
+
+<h2> Snake</h2>
+
+<script>
+    var GRID_HEIGHT = 40;
+    var GRID_WIDTH = 60;
+    var BLOCK_SIZE = 15;
+    var DIRECTIONS = {
+        up: 0,
+        right: 1,
+        down: 2,
+        left: 3
+    }
+    var COL_CHANGE = [0, 1, 0, -1];
+    var ROW_CHANGE = [-1, 0, 1, 0];
+    /*
+            0
+        3      1     
+            2       
+    
+    */
+    var SNAKE_DIRECTION = DIRECTIONS["up"];
+    var IS_DYING = false;
+    var IS_EATING = false;
+
+    var gameGrid = document.getElementById("snakeGrid");
+
+
+    //catch arrow
+    document.onkeydown = checkKey;
+    function checkKey(e) {
+        e = e || window.event;
+        if (e.keyCode == '38') {
+            //up arrow
+            SNAKE_DIRECTION = DIRECTIONS["up"];
+        }
+        else if (e.keyCode == '40') {
+            //down arrow
+            SNAKE_DIRECTION = DIRECTIONS["down"];
+        }
+        else if (e.keyCode == '37') {
+            //left arrow
+            SNAKE_DIRECTION = DIRECTIONS["left"];
+        }
+        else if (e.keyCode == '39') {
+            //right arrow
+            SNAKE_DIRECTION = DIRECTIONS["right"];
+        }
+    }
+
+
+    //initialize snake
+    var snake = [];
+    snake.push(new SnakePiece(20, 30));
+    snake.push(new SnakePiece(20, 31));
+    snake.push(new SnakePiece(20, 32));
+    snake.push(new SnakePiece(20, 33));
+    snake.push(new SnakePiece(20, 34));
+    snake.push(new SnakePiece(20, 35));
+    snake.push(new SnakePiece(20, 36));
+
+    var foods = [];
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+    foods.push(new FoodPiece());
+
+    var refreshId= setInterval(function () {
+        // MAIN LOOP
+        
+        //move the snake
+        snake.unshift(new SnakePiece(snake[0].row + ROW_CHANGE[SNAKE_DIRECTION], snake[0].col + COL_CHANGE[SNAKE_DIRECTION]));
+
+        //eat
+        IS_EATING = isEating();
+        if (IS_EATING) {
+            console.log("YOU ATE A FOOD");
+        }
+
+        // move tail of snake
+        if (!IS_EATING) {
+            gameGrid.removeChild(snake.pop().el);
+        }
+
+        // die
+        IS_DYING = isDying();
+        if (IS_DYING) {
+            clearInterval(refreshId);
+            alert("Game over. You died")
+            console.log("YOU'RE DEAD");
+        }
+
+        IS_EATING = false;
+        IS_DYING = false;
+
+
+        //console.log(SNAKE_DIRECTION);
+        //console.log(snake);
+        console.log(foods);
+    }, 400);
+
+    function SnakePiece(row, col) {
+
+        var mySnakePieceElement = document.createElement("div");
+        mySnakePieceElement.className = "snake";
+        mySnakePieceElement.style.top = (row * BLOCK_SIZE) + "px";
+        mySnakePieceElement.style.left = (col * BLOCK_SIZE) + "px";
+        gameGrid.appendChild(mySnakePieceElement);
+
+        this.col = col;
+        this.row = row;
+        this.el = mySnakePieceElement;
+    }
+
+    function FoodPiece() {
+        var col = getRandomInt(0, GRID_WIDTH);
+        var row = getRandomInt(0, GRID_HEIGHT);
+
+        var myFoodElement = document.createElement("div");
+        myFoodElement.className = "food";
+        myFoodElement.style.top = (row * BLOCK_SIZE) + "px";
+        myFoodElement.style.left = (col * BLOCK_SIZE) + "px";
+        gameGrid.appendChild(myFoodElement);
+
+        this.col = col;
+        this.row = row;
+        this.el = myFoodElement;
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function isDying() {
+        // hits wall
+        var head = snake[0];
+        if (head.row < 0 || head.row >= GRID_HEIGHT || head.col < 0 || head.col >= GRID_WIDTH) {
+            return true;
+        }
+
+        // eats self
+        var i;
+        for (i = 1; i < snake.length; i++) {
+            var curPiece = snake[i];
+            if (head.row === curPiece.row && head.col === curPiece.col) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function isEating() {
+        // eats food
+        var head = snake[0];
+
+        var i;
+        for (i = 0; i < foods.length; i++) {
+            var curIndex = i;
+            var curPiece = foods[curIndex];
+            if (head.row === curPiece.row && head.col === curPiece.col) {
+                foods.splice(curIndex, 1);
+                gameGrid.removeChild(curPiece.el);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@*@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="jumbotron">
+    <h1>ASP.NET</h1>
+    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS and JavaScript.</p>
+    <p><a href="http://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h2>Getting started</h2>
+        <p>
+            ASP.NET MVC gives you a powerful, patterns-based way to build dynamic websites that
+            enables a clean separation of concerns and gives you full control over markup
+            for enjoyable, agile development.
+        </p>
+        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301865">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Get more libraries</h2>
+        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
+        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301866">Learn more &raquo;</a></p>
+    </div>
+    <div class="col-md-4">
+        <h2>Web Hosting</h2>
+        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
+        <p><a class="btn btn-default" href="http://go.microsoft.com/fwlink/?LinkId=301867">Learn more &raquo;</a></p>
+    </div>
+</div>*@
