@@ -103,27 +103,51 @@
     snake.push(new SnakePiece(20, 36));
 
     var foods = [];
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
-    foods.push(new FoodPiece());
+    
+    for (var i = 0; i <10; i++){
+        foods.push(new FoodPiece());
+    }
 
-    var refreshId= setInterval(function () {
+    var intervalCounter = 0;
+    var intervalTime = 400;
+    var refreshId;
+    var gameLoop= function (){
+        refreshId = setInterval(function () {
+
+            if (intervalCounter < 10) {
+                intervalCounter++;
+            } else {
+                intervalCounter = 0;
+                intervalTime = intervalTime - 5;
+                clearInterval(refreshId);
+                gameLoop();
+                console.log(intervalTime)
+            }
+           RunGame();
+        }, intervalTime);
+    }
+    gameLoop();
+
+    var foodCounter = 0;
+
+    function RunGame() {
         // MAIN LOOP
-        
+
         //move the snake
         snake.unshift(new SnakePiece(snake[0].row + ROW_CHANGE[SNAKE_DIRECTION], snake[0].col + COL_CHANGE[SNAKE_DIRECTION]));
 
         //eat
         IS_EATING = isEating();
-        if (IS_EATING) {
-            console.log("YOU ATE A FOOD");
+        //if (IS_EATING) {
+        //    console.log("YOU ATE A FOOD");
+        //}
+
+        //after  cycles create a new piece of food
+        if (foodCounter < 10) {
+            foodCounter ++;
+        } else {
+            foodCounter = 0;
+            foods.push(new FoodPiece());
         }
 
         // move tail of snake
@@ -131,13 +155,7 @@
             gameGrid.removeChild(snake.pop().el);
         }
 
-        // die
-        IS_DYING = isDying();
-        if (IS_DYING) {
-            clearInterval(refreshId);
-            alert("Game over. You died")
-            console.log("YOU'RE DEAD");
-        }
+        
 
         IS_EATING = false;
         IS_DYING = false;
@@ -145,8 +163,18 @@
 
         //console.log(SNAKE_DIRECTION);
         //console.log(snake);
-        console.log(foods);
-    }, 400);
+        //console.log(foods);
+
+        // die
+        IS_DYING = isDying();
+        if (IS_DYING) {
+            clearInterval(refreshId);
+            alert("Game over. You died");
+            console.log("YOU'RE DEAD");
+            //return IS_DYING;
+        }
+        
+    }
 
     function SnakePiece(row, col) {
 
@@ -162,8 +190,8 @@
     }
 
     function FoodPiece() {
-        var col = getRandomInt(0, GRID_WIDTH);
-        var row = getRandomInt(0, GRID_HEIGHT);
+        var col = getRandomInt(0, GRID_WIDTH-1);
+        var row = getRandomInt(0, GRID_HEIGHT-1);
 
         var myFoodElement = document.createElement("div");
         myFoodElement.className = "food";
